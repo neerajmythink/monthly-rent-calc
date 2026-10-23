@@ -111,70 +111,185 @@ function App() {
       }
 
       const pdf = new jsPDF()
-      const left = 15
-      let y = 20
-      const money = (amount: number) => `INR ${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(17)
-      pdf.text('Rental Bill', left, y)
-      y += 8
-      pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(10)
-      pdf.text(format(parseISO(`${formState.billingMonth}-01`), 'MMM yyyy'), left, y)
-      y += 4
+      const doc = pdf as JsPDFDocument & { lastAutoTable: { finalY: number } }
+      const PW = pdf.internal.pageSize.getWidth()   // 210 mm
+      const ML = 14                                  // left / right margin
+      const CW = (PW - ML * 2 - 4) / 2             // half-column width (~89 mm)
+      const FW = PW - ML * 2                        // full-width content (~182 mm)
+      let y = 14
 
-      const table = (title: string, rows: string[][]) => {
+      const money = (n: number) =>
+        'INR ' + new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
+
+      // Shared compact row style
+      const rowStyle = {
+        font: 'helvetica' as const,
+        fontSize: 8,
+        cellPadding: { top: 2.5, bottom: 2.5, left: 4, right: 4 },
+        textColor: [71, 85, 105] as [number, number, number],
+        lineColor: [226, 232, 240] as [number, number, number],
+        lineWidth: 0.2,
+      }
+
+      // Highlight the section-total (last) row
+      const highlightLast = (lastIdx: number) => (data: Parameters<NonNullable<Parameters<typeof autoTable>[1]['didParseCell']>>[0]) => {
+        if (data.row.index === lastIdx) {
+          data.cell.styles.fontStyle = 'bold'
+          data.cell.styles.textColor = [15, 23, 42]
+          data.cell.styles.fillColor = [241, 245, 249]
+          data.cell.styles.fontSize = 8.5
+          data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 4 }
+        }
+      }
+
+      // Draw a section card header at (x, y) with given width
+      const cardHeader = (x: number, w: number, num: string, title: string, sub: string) => {
+        pdf.setFillColor(239, 246, 255)
+        pdf.roundedRect(x, y, w, 10, 2, 2, 'F')
+        pdf.setFillColor(30, 64, 175)
+        pdf.roundedRect(x + 2.5, y + 1.5, 8, 7, 1.5, 1.5, 'F')
         pdf.setFont('helvetica', 'bold')
-        pdf.setFontSize(10)
-        pdf.text(title, left, y)
-        y += 1
-        autoTable(pdf, {
-          startY: y,
-          head: [['Item', 'Details']],
-          body: rows,
-          theme: 'grid',
-          margin: { left, right: left },
-          styles: { font: 'helvetica', fontSize: 8, cellPadding: 2, textColor: [30, 41, 59], minCellHeight: 6 },
-          headStyles: { fillColor: [30, 64, 175], textColor: [255, 255, 255], fontStyle: 'bold', cellPadding: 2 },
-          columnStyles: {
-            0: { cellWidth: 78 },
-            1: { halign: 'right' },
-          },
-        })
-        y = (pdf as JsPDFDocument & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 4
+        pdf.setFontSize(5.5)
+        pdf.setTextColor(255, 255, 255)
+        pdf.text(num, x + 6.5, y + 6.2, { align: 'center' })
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(8)
+        pdf.setTextColor(15, 23, 42)
+        pdf.text(title, x + 13, y + 5.2)
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(6.5)
+        pdf.setTextColor(100, 116, 139)
+        pdf.text(sub, x + 13, y + 9)
       }
 
-      table('Rent', [
-        ['Monthly rent', money(built.bill.applicableRent)],
-      ])
-      table('Electricity', [
-        ['Main meter', `${built.bill.previousMainMeterReading} → ${built.bill.currentMainMeterReading} (${built.bill.mainUnitsConsumed} used)`],
-        ['Pump meter', `${built.bill.previousPumpMeterReading} → ${built.bill.currentPumpMeterReading} (${built.bill.pumpUnitsConsumed} used)`],
-        ['Tenant usage', `${built.bill.netElectricityUnits} units × ${money(built.bill.electricityRatePerUnit)}`],
-        ['Electricity charge', money(built.bill.electricityCharge)],
-      ])
-      table('Water', [
-        ['People', `${built.bill.numberOfPeople}`],
-        ['Rate per person', money(built.bill.waterChargePerPerson)],
-        ['Water charge', money(built.bill.waterCharges)],
-      ])
+      // ── Page header ───────────────────────────────────────────────
+      pdf.setFillColor(15, 23, 42)
+      pdf.roundedRect(ML, y, FW, 17, 3, 3, 'F')
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(13)
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('Rental Bill', ML + 5, y + 8)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(8.5)
+      pdf.setTextColor(148, 163, 184)
+      pdf.text(format(parseISO(`${formState.billingMonth}-01`), 'MMMM yyyy'), ML + 5, y + 14)
+      y += 21
 
-      if (y > 265) {
-        pdf.addPage()
-        y = 22
-      }
+      // ── 01 Main Rent  +  02 Water Bill  (side by side) ───────────
+      cardHeader(ML, CW, '01', 'Main Rent', 'Billing month and base rent.')
+      cardHeader(ML + CW + 4, CW, '02', 'Water Bill', 'Charge by household size.')
+      y += 11
+
+      const rowStart = y
+
+      autoTable(pdf, {
+        startY: rowStart,
+        body: [
+          ['Billing month', format(parseISO(`${formState.billingMonth}-01`), 'MMM yyyy')],
+          ['Base monthly rent', money(settings.baseMonthlyRent)],
+          ['Applicable rent', money(built.bill.applicableRent)],
+        ],
+        theme: 'plain',
+        margin: { left: ML, right: PW - (ML + CW) },
+        styles: rowStyle,
+        columnStyles: { 0: { cellWidth: CW * 0.58 }, 1: { halign: 'right' } },
+        didParseCell: highlightLast(2),
+      })
+      const endY01 = doc.lastAutoTable.finalY
+
+      autoTable(pdf, {
+        startY: rowStart,
+        body: [
+          ['Number of people', String(built.bill.numberOfPeople)],
+          ['Rate per person / month', money(built.bill.waterChargePerPerson)],
+          ['Water charge', money(built.bill.waterCharges)],
+        ],
+        theme: 'plain',
+        margin: { left: ML + CW + 4, right: ML },
+        styles: rowStyle,
+        columnStyles: { 0: { cellWidth: CW * 0.58 }, 1: { halign: 'right' } },
+        didParseCell: highlightLast(2),
+      })
+      const endY02 = doc.lastAutoTable.finalY
+
+      y = Math.max(endY01, endY02) + 5
+
+      // ── 03 Electricity Bill  (full width, 4-column grid) ─────────
+      cardHeader(ML, FW, '03', 'Electricity Bill', 'Main meter less common pump usage.')
+      y += 11
+
+      // Columns: [main-label | main-value | pump-label | pump-value]
+      const c0 = FW * 0.28
+      const c1 = FW * 0.22
+      const c2 = FW * 0.28
+      // c3 takes remaining width
+
       autoTable(pdf, {
         startY: y,
-        head: [['TOTAL PAYABLE', money(built.bill.totalPayable)]],
-        body: [],
-        theme: 'grid',
-        margin: { left, right: left },
-        styles: { font: 'helvetica', fontSize: 11, cellPadding: 3, fontStyle: 'bold' },
-        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255] },
-        columnStyles: { 1: { halign: 'right' } },
+        body: [
+          ['Main meter – previous', `${built.bill.previousMainMeterReading} units`, 'Pump meter – previous', `${built.bill.previousPumpMeterReading} units`],
+          ['Main meter – current',  `${built.bill.currentMainMeterReading} units`,  'Pump meter – current',  `${built.bill.currentPumpMeterReading} units`],
+          ['Main units consumed',   `${built.bill.mainUnitsConsumed} units`,         'Pump units consumed',   `${built.bill.pumpUnitsConsumed} units`],
+          ['Net units (tenant)',     `${built.bill.netElectricityUnits} units`,       'Rate per unit',         money(built.bill.electricityRatePerUnit)],
+          ['Electricity charge',     money(built.bill.electricityCharge),             '',                      ''],
+        ],
+        theme: 'plain',
+        margin: { left: ML, right: ML },
+        styles: rowStyle,
+        columnStyles: {
+          0: { cellWidth: c0 },
+          1: { cellWidth: c1, halign: 'right' },
+          2: { cellWidth: c2 },
+          3: { halign: 'right' },
+        },
+        didParseCell: (data) => {
+          if (data.row.index === 4) {
+            data.cell.styles.fontStyle = 'bold'
+            data.cell.styles.textColor = [15, 23, 42]
+            data.cell.styles.fillColor = [241, 245, 249]
+            data.cell.styles.fontSize = 8.5
+            data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 4 }
+          }
+        },
       })
-      pdf.save(`rental-bill-${formState.billingMonth}.pdf`)
+      y = doc.lastAutoTable.finalY + 5
 
+      // ── Total Payable ─────────────────────────────────────────────
+      pdf.setFillColor(15, 23, 42)
+      pdf.roundedRect(ML, y, FW, 10, 2, 2, 'F')
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(8.5)
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('Total Payable', ML + 5, y + 6.8)
+      y += 11
+
+      autoTable(pdf, {
+        startY: y,
+        body: [
+          ['Main rent',        money(built.bill.applicableRent)],
+          ['Water bill',       money(built.bill.waterCharges)],
+          ['Electricity bill', money(built.bill.electricityCharge)],
+          ['Total payable',    money(built.bill.totalPayable)],
+        ],
+        theme: 'plain',
+        margin: { left: ML, right: ML },
+        styles: rowStyle,
+        columnStyles: {
+          0: { cellWidth: FW * 0.55 },
+          1: { cellWidth: FW * 0.45, halign: 'right' },
+        },
+        didParseCell: (data) => {
+          if (data.row.index === 3) {
+            data.cell.styles.fontStyle = 'bold'
+            data.cell.styles.textColor = [255, 255, 255]
+            data.cell.styles.fillColor = [15, 23, 42]
+            data.cell.styles.fontSize = 9.5
+            data.cell.styles.cellPadding = { top: 4, bottom: 4, left: 4, right: 4 }
+          }
+        },
+      })
+
+      pdf.save(`rental-bill-${formState.billingMonth}.pdf`)
       setError('')
       setSuccess('PDF bill downloaded successfully.')
     } catch {
