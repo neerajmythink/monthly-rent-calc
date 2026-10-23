@@ -1,0 +1,410 @@
+:root {
+  font-family: Inter, 'Segoe UI', sans-serif;
+  color: #0f172a;
+  background: #f8fafc;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #e2e8f0 0%, #f8fafc 100%);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  padding: 12px max(12px, calc((100vw - 1040px) / 2));
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.primary-button {
+  border: none;
+  border-radius: 12px;
+  transition: 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+}
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 44px;
+  padding: 0 2px;
+}
+
+.page-mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 11px;
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.page-header .eyebrow {
+  font-size: 0.62rem;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+
+.billing-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rent-water-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.form-panel {
+  padding: 12px 16px;
+}
+
+.form-panel h3 {
+  margin: 0;
+}
+
+.bill-section {
+  padding: 12px 16px;
+}
+
+.bill-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.compact-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.compact-fields label {
+  min-width: 0;
+}
+
+.bill-section-heading h3,
+.bill-total-section h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.bill-section-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.section-number {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 10px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.section-amount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+.section-amount strong {
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.bill-total-section {
+  padding: 12px 16px;
+  color: #0f172a;
+  background: #eef2f7;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.bill-total-section .eyebrow {
+  color: #64748b;
+}
+
+.bill-total-section h3 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.total-breakdown {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.total-breakdown > div,
+.grand-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.total-breakdown > div {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: #475569;
+}
+
+.total-breakdown strong {
+  color: #0f172a;
+}
+
+.grand-total {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.grand-total span {
+  color: #475569;
+  font-size: 1.05rem;
+}
+
+.grand-total strong {
+  font-size: 1.5rem;
+}
+
+.bill-total-section .error-box {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.field-row,
+.grid-two {
+  display: grid;
+  gap: 12px;
+}
+
+.grid-two {
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  margin-top: 8px;
+}
+
+.electricity-input-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.meter-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.meter-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 7px 9px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.meter-group legend {
+  padding: 0 4px;
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.meter-group small {
+  grid-column: 1 / -1;
+  color: #64748b;
+  font-size: 0.7rem;
+}
+
+.meter-group small strong {
+  color: #0f172a;
+}
+
+.rate-group {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(100px, 0.6fr) minmax(180px, 1fr);
+  align-items: end;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.rate-result {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  color: #475569;
+  font-size: 0.75rem;
+}
+
+.rate-result strong {
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+input {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: white;
+}
+
+.error-box {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.success-box {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.error-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.button-row {
+  margin-top: 8px;
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .grid-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .rent-water-row,
+  .compact-fields,
+  .grid-two {
+    grid-template-columns: 1fr;
+  }
+
+  .meter-pair,
+  .rate-group {
+    grid-template-columns: 1fr;
+  }
+
+  .total-breakdown {
+    display: grid;
+    gap: 5px;
+  }
+}
